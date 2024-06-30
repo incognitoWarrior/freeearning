@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Earning Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px;
+            flex: 1 1 30%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card h3 {
+            margin-top: 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        #log {
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #user-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #user-form input {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Online Earning Dashboard</h1>
+    </header>
+    <div class="container">
+        <div id="user-form">
+            <h3>Enter Your Details</h3>
+            <input type="text" id="username" placeholder="Enter your name" required>
+            <input type="text" id="referral" placeholder="Enter referral code" required>
+            <button class="btn" onclick="submitDetails()">Submit</button>
+        </div>
+        <div class="dashboard" style="display: none;">
+            <div class="card">
+                <h3>Total Earnings</h3>
+                <p id="total-earnings">$0</p>
+            </div>
+            <div class="card">
+                <h3>Number of Days</h3>
+                <p id="number-of-days">0</p>
+            </div>
+            <div class="card">
+                <h3>Pending Withdrawals</h3>
+                <p id="pending-withdrawals">$0</p>
+            </div>
+        </div>
+        <div id="withdraw-section" style="display: none;">
+            <input type="number" id="withdraw-amount" placeholder="Enter amount to withdraw (1-150)" style="margin-top: 20px;">
+            <button class="btn" onclick="requestWithdraw()">Withdraw</button>
+            <div class="error" id="withdraw-error"></div>
+        </div>
+        <div id="log" style="display: none;">
+            <h3>Payment Log</h3>
+        </div>
+    </div>
+
+    <script>
+        let totalEarnings = 0;
+        let pendingWithdrawals = 0;
+        let days = 0;
+        let startDate = null;
+        let lastRequestTime = null;
+
+        function submitDetails() {
+            const username = document.getElementById('username').value;
+            const referral = document.getElementById('referral').value;
+
+            if (referral === 'zohra') {
+                document.querySelector('.dashboard').style.display = 'flex';
+                document.getElementById('withdraw-section').style.display = 'block';
+                document.getElementById('log').style.display = 'block';
+
+                const logDiv = document.getElementById('log');
+                const userLog = document.createElement('p');
+                userLog.textContent = `User: ${username}, Referral: ${referral} (Logged on ${new Date().toLocaleString()})`;
+                logDiv.appendChild(userLog);
+
+                startDate = new Date();
+                updateDays();
+            } else {
+                alert('Invalid referral code.');
+            }
+        }
+
+        function updateDays() {
+            const now = new Date();
+            if (startDate) {
+                days = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('number-of-days').textContent = days;
+            }
+        }
+
+        function requestWithdraw() {
+            const amount = parseInt(document.getElementById('withdraw-amount').value);
+
+            if (isNaN(amount) || amount < 1 || amount > 150) {
+                document.getElementById('withdraw-error').textContent = 'Please enter a valid amount between 1 and 150.';
+                return;
+            }
+
+            if (pendingWithdrawals > 0) {
+                document.getElementById('withdraw-error').textContent = 'You already have a pending withdrawal request.';
+                return;
+            }
+
+            const now = new Date();
+            if (lastRequestTime && (now - lastRequestTime) < 24 * 60 * 60 * 1000) {
+                document.getElementById('withdraw-error').textContent = 'You can only make one withdrawal request every 24 hours.';
+                return;
+            }
+
+            const logDiv = document.getElementById('log');
+            const newLog = document.createElement('p');
+            newLog.textContent = `Withdrawal request of $${amount} made on ${new Date().toLocaleString()}`;
+            logDiv.appendChild(newLog);
+
+            pendingWithdrawals = amount;
+            document.getElementById('pending-withdrawals').textContent = `$${pendingWithdrawals}`;
+            lastRequestTime = now;
+
+            // Simulate processing of withdrawal after 24 hours
+            setTimeout(() => {
+                totalEarnings += pendingWithdrawals;
+                pendingWithdrawals = 0;
+                document.getElementById('total-earnings').textContent = `$${totalEarnings}`;
+                document.getElementById('pending-withdrawals').textContent = `$${pendingWithdrawals}`;
+                updateDays();
+            }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+            // Clear error message
+            document.getElementById('withdraw-error').textContent = '';
+        }
+    </script>
+</body>
+</html>
